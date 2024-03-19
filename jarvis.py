@@ -9,8 +9,10 @@ import openai  # openai library for generating answers
 import subprocess  # to get installed apps on system
 import platform
 import psutil  # to get information of apps installed on system
+import requests  # to get information by api request
+import json     # to deal with json data
 
-# todo: tell him to open youtube/google/anything, and search something on opened website 
+# todo: tell him to open youtube/google/anything, and search something on opened website
 
 openai.api_key = "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"
 
@@ -114,12 +116,12 @@ if __name__ == "__main__":
     wishMe()
 
     # Get the dictionary of installed applications and their executable paths
-    installed_apps_dict = get_installed_apps()
+    # installed_apps_dict = get_installed_apps()
 
     # Print the list of installed applications and their executable paths
-    print("Installed Applications and their Executable Paths:")
-    for app, path in installed_apps_dict.items():
-        print(f"{app}: {path}", "142")
+    # print("Installed Applications and their Executable Paths:")
+    # for app, path in installed_apps_dict.items():
+    #     print(f"{app}: {path}", "142")
 
     while True:
         query = takeCommand().lower()
@@ -145,9 +147,10 @@ if __name__ == "__main__":
 
         # open (use) app installed on system
         elif "use discord" in query:
-            # path = ""
             speak("discord")
-            # os.system(f"open ")
+            os.system(
+                f"open C:/Users/Akash/AppData/Local/Discord/Update.exe --processStart Discord.exe"
+            )
 
         elif "the time" in query:
             strTime = datetime.datetime.now().strftime("%H:%M:%S")
@@ -168,6 +171,72 @@ if __name__ == "__main__":
             songs = os.listdir(music_dir)
             print(songs)
             os.startfile(os.path.join(music_dir, songs[0]))
+
+        # newsapi to get news
+        elif "news" in query:
+            url = (
+                "https://newsapi.org/v2/top-headlines?"
+                "country=in&"
+                "apiKey=a3a93275fcc4458e85899f20b3c526d7"
+            )
+            response = requests.get(url)
+            print(response.json())
+            print(len(response.json()['articles']))
+            
+            for i in range(len(response.json()['articles'])):
+                speak("Title")
+                print(response.json()['articles'][i]['title'])
+                speak(response.json()['articles'][i]['title'])
+                
+                speak("Description")
+                print(response.json()['articles'][i]['description'])
+                speak(response.json()['articles'][i]['description'])
+                
+                speak("Content")
+                print(response.json()['articles'][i]['content'])
+                speak(response.json()['articles'][i]['content'])
+            
+        
+        # weather api   
+        elif "weather" or "again" in query:
+            print('weather')
+            BASE_URL = "http://api.openweathermap.org/data/2.5/weather?"
+            API_KEY = 'bc6aa613f85881873cc7a319655efa9e'
+            CITY = "Mumbai"
+            
+            def kelvin_to_celsius_fahrenheit (kelvin):
+                celsius = kelvin - 273.15
+                fahrenheit = celsius * (9/5) + 32
+                return celsius, fahrenheit
+
+
+            url = BASE_URL + "appid=" + API_KEY + "&q=" + CITY
+            response = requests.get(url).json()
+
+            temp_kelvin = response['main']['temp']
+            temp_celsius, temp_fahrenheit = kelvin_to_celsius_fahrenheit(temp_kelvin)
+            feels_like_kelvin = response['main']['temp']
+            feels_like_celsius, feels_like_fahrenheit = kelvin_to_celsius_fahrenheit(feels_like_kelvin)
+            humidity = response['main']['humidity']
+            # wind_speed = response['main']['speed']
+            # description = response['main']['description']
+            sunrise_time = datetime.datetime.utcfromtimestamp(response['sys']['sunrise'] + response['timezone'])
+            sunset_time = datetime.datetime.utcfromtimestamp(response['sys']['sunset'] + response['timezone'])
+            
+
+            print(temp_kelvin, temp_celsius, feels_like_kelvin, feels_like_celsius, feels_like_fahrenheit, humidity)
+            print(sunrise_time, sunset_time)
+            # print(wind_speed, description, sunrise_time, sunset_time)
+            
+            speak(f"The temperature in {CITY} is {temp_celsius} degrees Celsius and {temp_fahrenheit} degrees Fahrenheit")
+            speak(f"The temperature in {CITY} is feels like {feels_like_celsius:.2f} degrees Celsius and {feels_like_fahrenheit} degrees Fahrenheit")
+            speak(f"Humidity in {CITY} is {humidity}%.")
+            # speak(f"Wind speed in {CITY} is {wind_speed} m/s")
+            # speak(f"General weather in {CITY} is {description}")
+            speak(f"Sun rises in {CITY} is {sunrise_time} local time.") 
+            speak(f"sun sets in {CITY} are {sunset_time} local time.")           
+
+            
 
         # currently not working
         elif "email to akash" in query:
